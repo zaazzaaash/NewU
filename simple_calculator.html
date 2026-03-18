@@ -1,0 +1,110 @@
+
+<style>
+  .calc-wrap { max-width: 320px; margin: 1.5rem auto; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+  .display { padding: 1.25rem 1.25rem 0.75rem; text-align: right; }
+  .display .expr { font-size: 13px; color: var(--color-text-secondary); min-height: 18px; word-break: break-all; }
+  .display .val { font-size: 36px; font-weight: 500; color: var(--color-text-primary); word-break: break-all; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5px; background: var(--color-border-tertiary); }
+  .grid button { background: var(--color-background-primary); border: none; padding: 18px 0; font-size: 17px; font-weight: 400; color: var(--color-text-primary); cursor: pointer; transition: background 0.1s; }
+  .grid button:hover { background: var(--color-background-secondary); }
+  .grid button:active { background: var(--color-background-tertiary); }
+  .grid button.op { color: #185FA5; font-weight: 500; }
+  .grid button.eq { background: #185FA5; color: #E6F1FB; font-weight: 500; }
+  .grid button.eq:hover { background: #0C447C; }
+  .grid button.clear { color: #A32D2D; font-weight: 500; }
+  .grid button.span2 { grid-column: span 2; }
+</style>
+
+<div class="calc-wrap">
+  <div class="display">
+    <div class="expr" id="expr"></div>
+    <div class="val" id="val">0</div>
+  </div>
+  <div class="grid">
+    <button class="clear span2" onclick="ac()">AC</button>
+    <button class="op" onclick="pct()">%</button>
+    <button class="op" onclick="op('/')">÷</button>
+
+    <button onclick="num('7')">7</button>
+    <button onclick="num('8')">8</button>
+    <button onclick="num('9')">9</button>
+    <button class="op" onclick="op('*')">×</button>
+
+    <button onclick="num('4')">4</button>
+    <button onclick="num('5')">5</button>
+    <button onclick="num('6')">6</button>
+    <button class="op" onclick="op('-')">−</button>
+
+    <button onclick="num('1')">1</button>
+    <button onclick="num('2')">2</button>
+    <button onclick="num('3')">3</button>
+    <button class="op" onclick="op('+')">+</button>
+
+    <button class="span2" onclick="num('0')">0</button>
+    <button onclick="dot()">.</button>
+    <button class="eq" onclick="eq()">=</button>
+  </div>
+</div>
+
+<script>
+  let cur = '0', prev = '', operator = '', fresh = false;
+  const valEl = document.getElementById('val');
+  const exprEl = document.getElementById('expr');
+
+  function update() { valEl.textContent = cur; }
+
+  function num(d) {
+    if (fresh) { cur = d; fresh = false; }
+    else cur = cur === '0' ? d : cur + d;
+    update();
+  }
+
+  function dot() {
+    if (fresh) { cur = '0.'; fresh = false; }
+    else if (!cur.includes('.')) cur += '.';
+    update();
+  }
+
+  function op(o) {
+    if (operator && !fresh) calc();
+    prev = cur; operator = o; fresh = true;
+    const sym = {'/':'÷','*':'×','-':'−','+':'+'}[o];
+    exprEl.textContent = cur + ' ' + sym;
+  }
+
+  function calc() {
+    if (!operator || !prev) return;
+    const a = parseFloat(prev), b = parseFloat(cur);
+    let r;
+    if (operator === '/') r = b !== 0 ? a / b : 'Error';
+    else if (operator === '*') r = a * b;
+    else if (operator === '-') r = a - b;
+    else if (operator === '+') r = a + b;
+    exprEl.textContent = prev + ' ' + {'/':'÷','*':'×','-':'−','+':'+'}[operator] + ' ' + cur + ' =';
+    cur = r === 'Error' ? 'Error' : String(parseFloat(r.toFixed(10)));
+    operator = ''; prev = ''; fresh = true;
+    update();
+  }
+
+  function eq() { calc(); }
+
+  function pct() {
+    cur = String(parseFloat(cur) / 100);
+    update();
+  }
+
+  function ac() {
+    cur = '0'; prev = ''; operator = ''; fresh = false;
+    exprEl.textContent = '';
+    update();
+  }
+
+  document.addEventListener('keydown', e => {
+    if ('0123456789'.includes(e.key)) num(e.key);
+    else if (e.key === '.') dot();
+    else if (['+','-','*','/'].includes(e.key)) op(e.key);
+    else if (e.key === 'Enter' || e.key === '=') eq();
+    else if (e.key === 'Backspace') { cur = cur.length > 1 ? cur.slice(0,-1) : '0'; update(); }
+    else if (e.key === 'Escape') ac();
+  });
+</script>
